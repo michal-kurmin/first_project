@@ -4,6 +4,7 @@ import pygame
 
 from settings import Settings
 from ship import Ship
+from bullet import Bullet
 
 class AlienInvasion:
     """Overall class to manage game assets and behaviour."""
@@ -12,17 +13,16 @@ class AlienInvasion:
         """Initialize the game and create game resources."""
         pygame.init()
         self.settings = Settings()
-
         self._screen_display('small')
-
         self.ship = Ship(self)
-
+        self.bullets = pygame.sprite.Group()
 
     def run_game(self):
         """Start the main loop for the game."""
         while True:
             self._check_events()
             self.ship.update()
+            self._update_bullets()
             self._update_screen()
             
     def _check_events(self):
@@ -47,7 +47,8 @@ class AlienInvasion:
             self._screen_display('full')
         if event.key == pygame.K_s:
             self._screen_display('small')
-
+        if event.key == pygame.K_SPACE:
+            self._fire_bullet()
 
 
 
@@ -58,17 +59,24 @@ class AlienInvasion:
         if event.key == pygame.K_LEFT:
             self.ship.moving_left = False
             
+    def _fire_bullet(self):
+        """Create a new bullet and add it to the group"""
+        if len(self.bullets) < self.settings.bullets_allowed:
+            new_bullet = Bullet(self)
+            self.bullets.add(new_bullet)
 
     def _update_screen(self):
         """Update images on the screen and flip to new scren"""
         self.screen.fill(self.settings.bg_color)
         self.ship.blitme()
+        for bullet in self.bullets.sprites():
+            bullet.draw_bullet()
         pygame.display.flip()
 
     def _screen_display(self, mode):
         if mode == 'small':
-            self.settings.screen_width = 1200
-            self.settings.screen_height = 800
+            self.settings.screen_width = 800
+            self.settings.screen_height = 600
             self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
         if mode == 'full':
             self.screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
@@ -76,6 +84,12 @@ class AlienInvasion:
             self.settings.screen_height = self.screen.get_rect().height
         pygame.display.set_caption("Alien Invasion")
 
+    def _update_bullets(self):
+        self.bullets.update()
+        for bullet in self.bullets.copy():
+            if bullet.rect.bottom <= 0:
+                self.bullets.remove(bullet)
+                
 
 if __name__ =='__main__':
     #Make a game instnce and run the game.
